@@ -1,7 +1,7 @@
-#Proximal Policy Optimization
+# Proximal Policy Optimization
 This is an pytorch-version implementation of [Proximal Policy Optimisation(PPO)](https://arxiv.org/abs/1707.06347). Some function of this code is based on [ikostrikov's TRPO project](https://github.com/ikostrikov/pytorch-trpo). In this code, the actor-network and the critic-network are separately. The actions are sampled from the beta distribution which could improve the performance. The paper about this is: [The Beta Policy for Continuous Control Reinforcement Learning](https://www.ri.cmu.edu/wp-content/uploads/2017/06/thesis-Chou.pdf)
 
-##Requirements
+## Requirements
 
 - python 3.5.2
 - openai gym

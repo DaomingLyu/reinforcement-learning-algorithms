@@ -1,7 +1,7 @@
-#Proximal Policy Optimization
+# Proximal Policy Optimization
 This is an pytorch-version implementation of [Deep Deterministic Policy Gradient(DDPG)](https://arxiv.org/abs/1509.02971). 
 
-##Requirements
+## Requirements
 - python 3.5.2
 - openai gym
 - mujoco-python
