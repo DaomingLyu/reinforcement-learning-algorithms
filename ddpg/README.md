@@ -20,7 +20,7 @@ You could also try some other mujoco's environment. This code has already pre-tr
 ### Test your models:
 ```bash
 cd /root-of-this-code/
-python demo.py
+python demo.py --cuda=0
 
 ```
 
