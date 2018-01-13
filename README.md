@@ -4,11 +4,11 @@ This Repository Will Implemented the Classic Deep Reinforcement Learning Algorit
 - [ ] Deep Q-Learning Network(DQN)
 - [ ] Double DQN(DDQN)
 - [ ] Dueling Network Architecture
-- [x] Deep Deterministic Policy Gradient(DDPG)
+- [x] [Deep Deterministic Policy Gradient(DDPG)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/ddpg)
 - [ ] Normalized Advantage Function(NAF)
-- [x] Asynchronous Advantage Actor-Critic(A3C)
+- [x] [Asynchronous Advantage Actor-Critic(A3C)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/a3c)
 - [ ] Trust Region Policy Optimization(TRPO)
-- [x] Proximal Policy Optimization(PPO)
+- [x] [Proximal Policy Optimization(PPO)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/ppo)
 - [ ] Actor Critic using Kronecker-Factored Trust Region(ACKTR)
 
 I has already implemented three of these algorithms. I will implement the rest of algorithms and keep update them in the future.
