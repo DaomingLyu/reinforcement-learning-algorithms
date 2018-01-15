@@ -55,9 +55,9 @@ class ddpg_brain:
 		self.actor_target_net.load_state_dict(self.actor_net.state_dict())
 		self.critic_target_net.load_state_dict(self.critic_net.state_dict())
 
-		# define the optimize....
+		# define the optimize.... add the L2 reg in critic optimzier here...
 		self.optimizer_actor = torch.optim.Adam(self.actor_net.parameters(), lr=self.policy_lr)
-		self.optimizer_critic = torch.optim.Adam(self.critic_net.parameters(), lr=self.value_lr)
+		self.optimizer_critic = torch.optim.Adam(self.critic_net.parameters(), lr=self.value_lr, weight_decay=1e-2)
 
 		# init the filter...
 		self.running_state = ZFilter((num_inputs, ), clip=5)
@@ -120,7 +120,7 @@ class ddpg_brain:
 			reward_mean = reward_sum if reward_mean is None else reward_mean * 0.99 + reward_sum * 0.01
 
 			if num_of_eposide % 10 == 0:
-				print('The eposide number is ' + str(num_of_eposide) + ', the running mean reward is ' + str(reward_mean) + 
+				print('The episode number is ' + str(num_of_eposide) + ', the running mean reward is ' + str(reward_mean) + 
 					', the actor_loss is ' + str(actor_loss) + ', the critic_loss is ' + str(critic_loss))
 			if num_of_eposide % 100 == 0:
 				save_path = self.path + 'policy_model_' + str(num_of_eposide) + '.pt'
