@@ -4,7 +4,7 @@ import torch
 # define some parameters which will be used....
 def achieve_args():
 	parse = argparse.ArgumentParser()
-	parse.add_argument('--env', default='Pendulum-v0', help='the name of the training environemnt')
+	parse.add_argument('--env', default='Reacher-v1', help='the name of the training environemnt')
 	parse.add_argument('--policy_lr', type=float, default=0.0001, help='the learning rate')
 	parse.add_argument('--value_lr', type=float, default=0.001, help='the learning rate')
 	parse.add_argument('--tau', type=float, default=0.001, help='used for soft-update')

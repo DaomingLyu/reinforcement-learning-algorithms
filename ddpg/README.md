@@ -13,14 +13,18 @@ This is an pytorch-version implementation of [Deep Deterministic Policy Gradient
 ```bash
 cd /root-of-this-code/
 python train_network.py
+or
+python train_network.py --env='Walker2d-v1' (env name as you want)
 
 ```
-You could also try some other mujoco's environment. This code has already pre-trained two environments: `Pendulum-v1` and `Reacher-v1`. You could try them by yourself!
+You could also try some other mujoco's environment. This code has already pre-trained two environments: `Reacher-v1` and `Walker2d-v1`. You could try them by yourself!
 
 ### Test your models:
 ```bash
 cd /root-of-this-code/
 python demo.py --cuda=0
+or
+python demo.py --env='Walker2d-v1' --cuda=0
 
 ```
 

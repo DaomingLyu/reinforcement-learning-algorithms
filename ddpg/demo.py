@@ -23,5 +23,5 @@ ddpg_man = ddpg_brain(env=env,
 						use_cuda=args.cuda
 						)
 
-ddpg_man.test_network('saved_models/Pendulum-v0/policy_model_3800.pt')
+ddpg_man.test_network(args.env)
 

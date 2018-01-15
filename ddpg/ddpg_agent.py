@@ -4,6 +4,7 @@ from torch.autograd import Variable
 import models
 from exploration_noise import OUNoise
 import random
+from running_state import ZFilter
 
 # this is the implementation of thte DDPG(Deep Deterministic Policy Gradient)
 # last update 2018-Jan-11
@@ -58,6 +59,9 @@ class ddpg_brain:
 		self.optimizer_actor = torch.optim.Adam(self.actor_net.parameters(), lr=self.policy_lr)
 		self.optimizer_critic = torch.optim.Adam(self.critic_net.parameters(), lr=self.value_lr)
 
+		# init the filter...
+		self.running_state = ZFilter((num_inputs, ), clip=5)
+
 	def train_network(self):
 		# init the brain memory....
 		brain_memory = []
@@ -72,6 +76,7 @@ class ddpg_brain:
 			reward_sum = 0
 			# reset the noise....
 			state = self.env.reset()
+			state = self.running_state(state)
 			ou_noise.reset()
 
 			for t in range(self.max_time_step):
@@ -90,6 +95,10 @@ class ddpg_brain:
 
 				# sum the reward...
 				reward_sum += reward
+
+				# use filter...
+				state_ = self.running_state(state_)
+
 				# store the transition....
 				if len(brain_memory) >= self.buffer_size:
 					brain_memory.pop(0)
@@ -115,7 +124,7 @@ class ddpg_brain:
 					', the actor_loss is ' + str(actor_loss) + ', the critic_loss is ' + str(critic_loss))
 			if num_of_eposide % 100 == 0:
 				save_path = self.path + 'policy_model_' + str(num_of_eposide) + '.pt'
-				torch.save(self.actor_net.state_dict(), save_path)
+				torch.save([self.actor_net.state_dict(), self.running_state], save_path)
 
 			num_of_eposide += 1
 
@@ -137,7 +146,8 @@ class ddpg_brain:
 		reward_batch_tensor = torch.Tensor(reward_batch).view(-1, 1)
 
 		terminal_batch = np.array([int(element[2]) for element in buffer_batch])
-		terminal_batch_tensor = torch.Tensor(reward_batch).view(-1, 1)
+		terminal_batch = 1 - terminal_batch
+		terminal_batch_tensor = torch.Tensor(terminal_batch).view(-1, 1)
 
 		state_next_batch = np.array([element[3] for element in buffer_batch])
 		state_next_batch_tensor = torch.Tensor(state_next_batch)
@@ -178,7 +188,7 @@ class ddpg_brain:
 		# calculate the target number...
 		action_out = self.actor_target_net(state_next_batch_tensor)
 		expected_Q = self.critic_target_net(state_next_batch_tensor, action_out)
-		target = reward_batch_tensor + self.gamma * expected_Q
+		target = reward_batch_tensor + self.gamma * expected_Q * terminal_batch_tensor
 		# detach from the calculation graphic....
 		target = target.detach()
 		# calculate the Q value...
@@ -213,11 +223,14 @@ class ddpg_brain:
 # ------------------------------------------------------------------------------------------------------- #
 
 	# here is used to test the network....
-	def test_network(self, model_path):
-		self.actor_net.load_state_dict(torch.load(model_path, map_location=lambda storage, loc: storage))
+	def test_network(self, env_name):
+		model_path = 'saved_models/' + env_name + '/policy_model.pt'
+		actor_model, filter_model = torch.load(model_path, map_location=lambda storage, loc: storage)
+		self.actor_net.load_state_dict(actor_model)
 		self.actor_net.eval()
 		while True:
 			state = self.env.reset()
+			state = self.test_filter(state, filter_model.rs.mean, filter_model.rs.std)
 			reward_sum = 0
 
 			while True:
@@ -228,7 +241,7 @@ class ddpg_brain:
 				actor_numpy = action_out.data.numpy()[0]
 
 				state_, reward, done, _ = self.env.step(self.action_scale * actor_numpy)
-
+				state_ = self.test_filter(state_, filter_model.rs.mean, filter_model.rs.std)
 				reward_sum += reward
 
 				if done:
@@ -238,8 +251,13 @@ class ddpg_brain:
 
 			print('The reward sum is ' + str(reward_sum))
 
+	# used for testing... reduce mean and the variance...
+	def test_filter(self, x, mean, std, clip=10):
+		x = x - mean
+		x = x / (std + 1e-8)
+		x = np.clip(x, -clip, clip)
 
-
+		return x
 
 
 
