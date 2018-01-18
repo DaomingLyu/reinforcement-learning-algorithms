@@ -16,6 +16,7 @@ cd /root-of-this-code/
 python train_network.py
 
 ```
+After training about 2 hours, our bird could pass about `130` pipes. So, feel free to try it!
 
 ### Test your models:
 ```bash
