@@ -7,7 +7,6 @@ This is an pytorch-version implementation of ["Human-level control through deep 
 - openai gym
 - [gym_ple](https://github.com/lusob/gym-ple)
 - pytorch
-- [pyro](http://pyro.ai/)
 
 ## Instruction to run the code
 ### Train your models
@@ -21,7 +20,7 @@ After training about 2 hours, our bird could pass about `130` pipes. So, feel fr
 ### Test your models:
 ```bash
 cd /root-of-this-code/
-python demo.py
+python demo.py --cuda=0
 
 ```
 
