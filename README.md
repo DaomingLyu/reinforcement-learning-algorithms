@@ -1,7 +1,7 @@
 # Deep Reinforcement Learning Alogrithms
 ![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)  
 This Repository Will Implement the Classic Deep Reinforcement Learning Algorithms.
-- [ ] Deep Q-Learning Network(DQN)
+- [x] [Deep Q-Learning Network(DQN)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/dqn)
 - [ ] Double DQN(DDQN)
 - [ ] Dueling Network Architecture
 - [x] [Deep Deterministic Policy Gradient(DDPG)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/ddpg)
