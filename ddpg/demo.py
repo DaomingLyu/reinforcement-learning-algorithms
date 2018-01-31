@@ -10,18 +10,18 @@ args = arguments.achieve_args()
 env = gym.make(args.env)
 
 ddpg_man = ddpg_brain(env=env, 
-						policy_lr=args.policy_lr,
-						value_lr=args.value_lr,
-						tau=args.tau,
-						gamma=args.gamma,
-						buffer_size=args.buffer_size,
-						max_time_step=args.max_time_step,
-						observate_time=args.observate_time,
-						batch_size=args.batch_size,
-						path=args.save_dir,
-						soft_update_step=args.soft_update_step,
-						use_cuda=args.cuda
-						)
+                        policy_lr=args.policy_lr,
+                        value_lr=args.value_lr,
+                        tau=args.tau,
+                        gamma=args.gamma,
+                        buffer_size=args.buffer_size,
+                        max_time_step=args.max_time_step,
+                        observate_time=args.observate_time,
+                        batch_size=args.batch_size,
+                        path=args.save_dir,
+                        soft_update_step=args.soft_update_step,
+                        use_cuda=args.cuda
+                        )
 
 ddpg_man.test_network(args.env)
 
