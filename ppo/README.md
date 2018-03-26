@@ -13,11 +13,8 @@ This is an pytorch-version implementation of [Proximal Policy Optimisation(PPO)]
 ### Train your models
 ```bash
 cd /root-of-this-code/
-
 python train_network.py --cuda (if you have a gpu)
-
 or
-
 python train_network.py (if you don't have a gpu)
 ```
 You could also try some other mujoco's environment. This code has already pre-trained two mujoco environments: `Walker2d-v1` and `Humanoid-v1`. You could try them by yourself!
@@ -25,10 +22,14 @@ You could also try some other mujoco's environment. This code has already pre-tr
 ### Test your models:
 ```bash
 cd /root-of-this-code/
-
 python demo.py
 
 ```
+## Results
+### Training Curve
+![Training_Curve](https://github.com/TianhongDai/Reinforcement_Learning_Algorithms/blob/master/ppo/figures/result.png)
+### Demo: Walker2d-v1
+![Demo](https://github.com/TianhongDai/Reinforcement_Learning_Algorithms/blob/master/ppo/figures/walker2d.gif)
 
 
 
