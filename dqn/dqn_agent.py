@@ -5,7 +5,7 @@ from torch.autograd import Variable
 import cv2
 import random
 import gym_ple
-# This is the implementation of dqn
+# This is the implementation of DQN
 # 2017-01-17
 # author: Tianhong Dai
 
@@ -271,46 +271,4 @@ class dqn_brain:
                 state = state_
 
             print('In this episode, the bird totally pass ' + str(pipe_sum) + ' pipes!')
-
-
-
-
-
-
-
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -1,20 +1,21 @@
+from arguments import achieve_arguments
 import gym
 import ppo_agent
 import models
 import mujoco_py
 
-env = gym.make('Humanoid-v1')
+"""
+This module was used to test the PPO algorithms...
 
-num_inputs = env.observation_space.shape[0]
-num_actions = env.action_space.shape[0]
+"""
 
-print('The number of states is ' + str(num_inputs))
-print('The number of actions is ' + str(num_actions))
-
-policy_network = models.Policy(num_inputs, num_actions)
-value_network = models.Value(num_inputs)
-
-ppo_man = ppo_agent.ppo_brain(env, policy_network, value_network, use_cuda=False)
-ppo_man.test_network('saved_models/Humanoid-v1/policy_net_model_400.pt')
+if __name__ == '__main__':
+    # get the arguments
+    args = achieve_arguments()
+    # set up the testing environment
+    env = gym.make(args.env_name)
+    # start to test...
+    ppo_test = ppo_agent.ppo_brain(env, args)
+    ppo_test.test_network()
 
 

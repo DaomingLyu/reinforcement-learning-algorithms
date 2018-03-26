@@ -5,7 +5,7 @@ This is an pytorch-version implementation of [Proximal Policy Optimisation(PPO)]
 
 - python 3.5.2
 - openai gym
-- mujoco-python
+- mujoco-python 0.5.7
 - pytorch
 - [pyro](http://pyro.ai/)
 
@@ -13,14 +13,19 @@ This is an pytorch-version implementation of [Proximal Policy Optimisation(PPO)]
 ### Train your models
 ```bash
 cd /root-of-this-code/
-python train_network.py
 
+python train_network.py --cuda (if you have a gpu)
+
+or
+
+python train_network.py (if you don't have a gpu)
 ```
 You could also try some other mujoco's environment. This code has already pre-trained two mujoco environments: `Walker2d-v1` and `Humanoid-v1`. You could try them by yourself!
 
 ### Test your models:
 ```bash
 cd /root-of-this-code/
+
 python demo.py
 
 ```

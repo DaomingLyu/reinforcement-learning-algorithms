@@ -22,7 +22,7 @@ However, I can't calculate the Back-Propagation of Beta Distribution's Entropy. 
 - python 3.5.2
 - openai gym
 - [gym_ple](https://github.com/lusob/gym-ple)
-- mujoco-python
+- mujoco-py - 0.5.7
 - pytorch
 - [pyro](http://pyro.ai/)
 
