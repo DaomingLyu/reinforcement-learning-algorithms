@@ -13,16 +13,16 @@ This is an pytorch-version implementation of [Proximal Policy Optimisation(PPO)]
 ### Train your models
 ```bash
 cd /root-of-this-code/
-python train_network.py --cuda (if you have a gpu)
+python train_network.py --cuda --env_name='the env you want to train' (if you have a gpu)
 or
-python train_network.py (if you don't have a gpu)
+python train_network.py --env_name='the env you want to train' (if you don't have a gpu)
 ```
 You could also try some other mujoco's environment. This code has already pre-trained two mujoco environments: `Walker2d-v1` and `Humanoid-v1`. You could try them by yourself!
 
 ### Test your models:
 ```bash
 cd /root-of-this-code/
-python demo.py
+python demo.py --env_name='the env you want to display'
 
 ```
 ## Results
