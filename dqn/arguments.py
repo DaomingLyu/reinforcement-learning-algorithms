@@ -1,5 +1,4 @@
 import argparse
-import torch
 
 # define some parameters which will be used....
 def achieve_args():
@@ -16,11 +15,12 @@ def achieve_args():
     parse.add_argument('--batch_size', type=int, default=32, help='the batch_size')
     parse.add_argument('--save_dir', default='saved_models/', help='the folder which save the models')
     parse.add_argument('--hard_update_step', type=int, default=500, help='the step to update the target network')
-    parse.add_argument('--cuda', type=int, default=1, help='if use the cuda')
+    parse.add_argument('--cuda', action='store_true', help='if use the gpu to train the network')
+    parse.add_argument('--display_interval', type=int, default=10, help='the interval to show the training information')
+    parse.add_argument('--save_interval', type=int, default=100, help='the interval to save the models')
 
     args = parse.parse_args()
 
-    args.cuda = args.cuda * int(torch.cuda.is_available())
     args.save_dir = args.save_dir + args.env + '/'
 
     return args

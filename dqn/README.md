@@ -12,15 +12,24 @@ This is an pytorch-version implementation of ["Human-level control through deep 
 ### Train your models
 ```bash
 cd /root-of-this-code/
-python train_network.py
+python train_network.py --cuda (if you have a GPU)
+or
+python train_network.py (if you don't have a GPU)
 
 ```
-After training about 2 hours, our bird could pass about `130` pipes. So, feel free to try it!
+After training about 6 hours, our bird could pass about `264` pipes maximally. So, feel free to try it!
 
 ### Test your models:
 ```bash
 cd /root-of-this-code/
-python demo.py --cuda=0
+python demo.py
 
 ```
+## Results
+### Training Curve
+Although from the training plot, it could just pass about 30 pipes. However, in the demo, it could have impressive performance!
+![results]
+### Demo: Flappy-Bird
+![demo]
+
 
