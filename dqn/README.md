@@ -28,8 +28,8 @@ python demo.py
 ## Results
 ### Training Curve
 Although from the training plot, it could just pass about 30 pipes. However, in the demo, it could have impressive performance!
-![results]
+![results](https://github.com/TianhongDai/Reinforcement_Learning_Algorithms/blob/master/dqn/figures/results.png)
 ### Demo: Flappy-Bird
-![demo]
+![demo](https://github.com/TianhongDai/Reinforcement_Learning_Algorithms/blob/master/dqn/figures/flappybird.gif)
 
 
