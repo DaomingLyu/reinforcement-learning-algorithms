@@ -37,7 +37,7 @@ class ppo_brain():
 
         # check if cuda is avaiable...
         self.use_cuda = torch.cuda.is_available() and self.args.cuda
-        print('The cuda is avaiable: ' + str(self.use_cuda))
+        print('The cuda is avaiable: ' + str(torch.cuda.is_available()))
         print('If use the cuda: ' + str(self.args.cuda))
 
         # define the network...

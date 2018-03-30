@@ -23,7 +23,7 @@ class dqn_brain:
         self.env = env    
         # check if use the cuda to train the network...
         self.use_cuda = torch.cuda.is_available() and self.args.cuda 
-        print('The cuda is avaiable: ' + str(self.use_cuda))
+        print('The cuda is avaiable: ' + str(torch.cuda.is_available()))
         print('If use the cuda: ' + str(self.args.cuda))
 
         # get the number of actions....
