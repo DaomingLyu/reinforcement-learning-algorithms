@@ -7,7 +7,7 @@ This Repository Will Implement the Classic Deep Reinforcement Learning Algorithm
 - [x] [Deep Deterministic Policy Gradient(DDPG)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/ddpg)
 - [ ] Normalized Advantage Function(NAF)
 - [x] [Asynchronous Advantage Actor-Critic(A3C)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/a3c)
-- [ ] Trust Region Policy Optimization(TRPO)
+- [x] [Trust Region Policy Optimization(TRPO)](https://github.com/TianhongDai/Reinforcement_Learning_Algorithms/tree/master/trpo)
 - [x] [Proximal Policy Optimization(PPO)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/ppo)
 - [ ] Actor Critic using Kronecker-Factored Trust Region(ACKTR)
 
