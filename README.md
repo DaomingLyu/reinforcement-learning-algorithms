@@ -1,12 +1,13 @@
 # Deep Reinforcement Learning Alogrithms
 ![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)  
-This Repository Will Implement the Classic Deep Reinforcement Learning Algorithms.
+This Repository Will Implement the Classic Deep Reinforcement Learning Algorithms. 
+**Important Notice:** Due to the upgrade of pytorch(from 0.3 to 0.4), the repository will have an important update on **August** with pytorch 0.4.0 and better codes style.
 - [x] [Deep Q-Learning Network(DQN)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/dqn)
 - [x] [Double DQN(DDQN)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/double_dqn)
 - [ ] Dueling Network Architecture
 - [x] [Deep Deterministic Policy Gradient(DDPG)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/ddpg)
 - [ ] Normalized Advantage Function(NAF)
-- [x] [Asynchronous Advantage Actor-Critic(A3C)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/a3c)
+- [x] [Advantage Actor-Critic(A2C)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/a3c)
 - [x] [Trust Region Policy Optimization(TRPO)](https://github.com/TianhongDai/Reinforcement_Learning_Algorithms/tree/master/trpo)
 - [x] [Proximal Policy Optimization(PPO)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/ppo)
 - [ ] Actor Critic using Kronecker-Factored Trust Region(ACKTR)

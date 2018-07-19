@@ -1,282 +1,170 @@
-import numpy as np 
+import numpy as np
 import torch
-from torch.autograd import Variable
-import models
-from exploration_noise import OUNoise
+from models import Actor, Critic
+from ounoise import OUNoise
 import random
-from running_state import ZFilter
+from datetime import datetime
+import os
 
-# this is the implementation of thte DDPG(Deep Deterministic Policy Gradient)
-# last update 2018-Jan-11
-# author: Tianhong Dai
-class ddpg_brain:
-    def __init__(self, env, policy_lr, value_lr, tau, gamma, buffer_size, max_time_step, observate_time, batch_size, 
-                        path, soft_update_step, use_cuda):
+# define the class...
+class ddpg_agent:
+    def __init__(self, args, env):
+        self.args = args
         self.env = env
-        self.policy_lr = policy_lr
-        self.value_lr = value_lr
-        self.use_cuda = bool(use_cuda)
-        self.tau = tau
-        self.gamma = gamma
-        self.buffer_size = buffer_size
-        self.max_time_step = max_time_step
-        self.observate_time = observate_time
-        self.batch_size = batch_size
-        self.global_time_step = 0
-        self.path = path
-        self.soft_update_step = soft_update_step
-
-        print('IF USE CUDA: ' + str(self.use_cuda))
-
+        # get the number of inputs...
         num_inputs = self.env.observation_space.shape[0]
-        self.num_actions = self.env.action_space.shape[0]
-
-        # the scale of the action space....
+        num_actions = self.env.action_space.shape[0]
         self.action_scale = self.env.action_space.high[0]
-
-        # build up the network....
-        # build the actor_network firstly...
-        self.actor_net = models.Policy(num_inputs, self.num_actions)
-        self.actor_target_net = models.Policy(num_inputs, self.num_actions)
-
-        # build the critic_network....
-        self.critic_net = models.Critic(num_inputs, self.num_actions)
-        self.critic_target_net = models.Critic(num_inputs, self.num_actions)
-
-        # if use cuda...
-        if self.use_cuda:
+        # build up the network
+        self.actor_net = Actor(num_inputs, num_actions)
+        self.critic_net = Critic(num_inputs, num_actions)
+        # get the target network...
+        self.actor_target_net = Actor(num_inputs, num_actions)
+        self.critic_target_net = Critic(num_inputs, num_actions)
+        if self.args.cuda:
             self.actor_net.cuda()
-            self.actor_target_net.cuda()
-
             self.critic_net.cuda()
+            self.actor_target_net.cuda()
             self.critic_target_net.cuda()
-
-        # init the same parameters....
+        # copy the parameters..
         self.actor_target_net.load_state_dict(self.actor_net.state_dict())
         self.critic_target_net.load_state_dict(self.critic_net.state_dict())
+        # setup the optimizer...
+        self.optimizer_actor = torch.optim.Adam(self.actor_net.parameters(), lr=self.args.actor_lr)
+        self.optimizer_critic = torch.optim.Adam(self.critic_net.parameters(), lr=self.args.critic_lr, weight_decay=self.args.critic_l2_reg)
+        # setting up the noise
+        self.ou_noise = OUNoise(num_actions)
+        # check some dir
+        if not os.path.exists(self.args.save_dir):
+            os.mkdir(self.args.save_dir)
+        self.model_path = self.args.save_dir + self.args.env_name + '/'
+        if not os.path.exists(self.model_path):
+            os.mkdir(self.model_path)
 
-        # define the optimize.... add the L2 reg in critic optimzier here...
-        self.optimizer_actor = torch.optim.Adam(self.actor_net.parameters(), lr=self.policy_lr)
-        self.optimizer_critic = torch.optim.Adam(self.critic_net.parameters(), lr=self.value_lr, weight_decay=1e-2)
-
-        # init the filter...
-        self.running_state = ZFilter((num_inputs, ), clip=5)
-
-    def train_network(self):
-        # init the brain memory....
-        brain_memory = []
-        num_of_eposide = 0
-        # init the noise for exploration...
-        ou_noise = OUNoise(self.num_actions)
-        reward_mean = None
-        actor_loss = 0
-        critic_loss = 0
-
-        while True:
-            reward_sum = 0
-            # reset the noise....
+    # start to train the network..
+    def learn(self):
+        # init the brain memory
+        replay_buffer = []
+        total_timesteps = 0
+        running_reward = None
+        for episode_idx in range(self.args.max_episode):
             state = self.env.reset()
-            state = self.running_state(state)
-            ou_noise.reset()
-
-            for t in range(self.max_time_step):
-                state_tensor = torch.Tensor(state).view(1, -1)
-                if self.use_cuda:
-                    state_tensor = Variable(state_tensor).cuda()
-                else:
-                    state_tensor = Variable(state_tensor)
-
-                # input the state to the actor network....
-                action_out = self.actor_net(state_tensor)
-                action_selected = self.select_actions(action_out, ou_noise)
-
-                # input the action into the env...
-                state_, reward, done, _ = self.env.step(self.action_scale * action_selected)
-
-                # sum the reward...
-                reward_sum += reward
-
-                # use filter...
-                state_ = self.running_state(state_)
-
-                # store the transition....
-                if len(brain_memory) >= self.buffer_size:
-                    brain_memory.pop(0)
-                
-                brain_memory.append((state, reward, done, state_, action_selected))
-
-                # update the global_time_step...
-                self.global_time_step += 1
-
-                # the code style here not good...               
-                if len(brain_memory) >= self.observate_time:
-                    mini_batch = random.sample(brain_memory, self.batch_size)
-                    critic_loss, actor_loss = self.update_networks(mini_batch)
-
+            # get the scale of the ou noise...
+            self.ou_noise.scale = (self.args.noise_scale - self.args.final_noise_scale) * max(0, self.args.exploration_length - episode_idx) / \
+                                self.args.exploration_length + self.args.final_noise_scale
+            self.ou_noise.reset()
+            # start the training
+            reward_total = 0
+            while True:
+                state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
+                if self.args.cuda:
+                    state_tensor = state_tensor.cuda()
+                with torch.no_grad():
+                    policy = self.actor_net(state_tensor)
+                # start to select the actions...
+                actions = self._select_actions(policy)
+                # step
+                state_, reward, done, _ = self.env.step(actions * self.action_scale)
+                total_timesteps += 1
+                reward_total += reward
+                # start to store the samples...
+                replay_buffer.append((state, reward, actions, done, state_))
+                # check if the buffer size is outof range
+                if len(replay_buffer) > self.args.replay_size:
+                    replay_buffer.pop(0)
+                if len(replay_buffer) > self.args.batch_size:
+                    mini_batch = random.sample(replay_buffer, self.args.batch_size)
+                    # start to update the network
+                    _, _ = self._update_network(mini_batch)
                 if done:
                     break
                 state = state_
-            # we will use the expoential averaged reward: so it's the average of 1 / 0.01 = 100 games.
-            reward_mean = reward_sum if reward_mean is None else reward_mean * 0.99 + reward_sum * 0.01
+            running_reward = reward_total if running_reward is None else running_reward * 0.99 + reward_total * 0.01
+            if episode_idx % self.args.display_interval == 0:
+                torch.save(self.actor_net.state_dict(), self.model_path + 'model.pt')
+                print('[{}] Episode: {}, Frames: {}, Rewards: {}'.format(datetime.now(), episode_idx, total_timesteps, running_reward))
 
-            if num_of_eposide % 10 == 0:
-                print('The episode number is ' + str(num_of_eposide) + ', the running mean reward is ' + str(reward_mean) + 
-                    ', the actor_loss is ' + str(actor_loss) + ', the critic_loss is ' + str(critic_loss))
-            if num_of_eposide % 100 == 0:
-                save_path = self.path + 'policy_model_' + str(num_of_eposide) + '.pt'
-                torch.save([self.actor_net.state_dict(), self.running_state], save_path)
+        self.env.close()
+    # select actions
+    def _select_actions(self, policy):
+        actions = policy.detach().cpu().numpy()[0]
+        actions = actions + self.ou_noise.noise()
+        actions = np.clip(actions, -1, 1)
+        return actions
+    
+    # update the network
+    def _update_network(self, mini_batch):
+        state_batch = np.array([element[0] for element in mini_batch])
+        state_batch = torch.tensor(state_batch, dtype=torch.float32)
+        # reward batch
+        reward_batch = np.array([element[1] for element in mini_batch])
+        reward_batch = torch.tensor(reward_batch, dtype=torch.float32).unsqueeze(1)
+        # done batch
+        done_batch = np.array([int(element[3]) for element in mini_batch])
+        done_batch = 1 - done_batch
+        done_batch = torch.tensor(done_batch, dtype=torch.float32).unsqueeze(1)
+        # action batch
+        actions_batch = np.array([element[2] for element in mini_batch])
+        actions_batch = torch.tensor(actions_batch, dtype=torch.float32)
+        # next stsate
+        state_next_batch = np.array([element[4] for element in mini_batch])
+        state_next_batch = torch.tensor(state_next_batch, dtype=torch.float32)
+        # check if use the cuda
+        if self.args.cuda:
+            state_batch = state_batch.cuda()
+            reward_batch = reward_batch.cuda()
+            done_batch = done_batch.cuda()
+            actions_batch = actions_batch.cuda()
+            state_next_batch = state_next_batch.cuda()
 
-            num_of_eposide += 1
-
-    # select the action....
-    def select_actions(self, action_out, ou_noise):
-        action_numpy = action_out.data.cpu().numpy()[0]
-        action_selected = action_numpy + ou_noise.noise()
-        action_selected = np.clip(action_selected, -1, 1)
-
-        return action_selected
-
-
-    # update the network....
-    def update_networks(self, buffer_batch):
-        state_batch = np.array([element[0] for element in buffer_batch])
-        state_batch_tensor = torch.Tensor(state_batch)
-
-        reward_batch = np.array([element[1] for element in buffer_batch])
-        reward_batch_tensor = torch.Tensor(reward_batch).view(-1, 1)
-
-        terminal_batch = np.array([int(element[2]) for element in buffer_batch])
-        terminal_batch = 1 - terminal_batch
-        terminal_batch_tensor = torch.Tensor(terminal_batch).view(-1, 1)
-
-        state_next_batch = np.array([element[3] for element in buffer_batch])
-        state_next_batch_tensor = torch.Tensor(state_next_batch)
-
-        action_batch = np.array([element[4] for element in buffer_batch])
-        action_batch_tensor = torch.Tensor(action_batch)
-
-        # process the data....
-        if self.use_cuda:
-            state_batch_tensor = Variable(state_batch_tensor).cuda()
-            reward_batch_tensor = Variable(reward_batch_tensor).cuda()
-            terminal_batch_tensor = Variable(terminal_batch_tensor).cuda()
-            state_next_batch_tensor = Variable(state_next_batch_tensor).cuda()
-            action_batch_tensor = Variable(action_batch_tensor).cuda()
-        else:
-            state_batch_tensor = Variable(state_batch_tensor)
-            reward_batch_tensor = Variable(reward_batch_tensor)
-            terminal_batch_tensor = Variable(terminal_batch_tensor)
-            state_next_batch_tensor = Variable(state_next_batch_tensor)
-            action_batch_tensor = Variable(action_batch_tensor)
-
-        # will up date the critic network... 
-        critic_loss = self.update_critic_network(state_batch_tensor, state_next_batch_tensor, terminal_batch_tensor, 
-                                                reward_batch_tensor, action_batch_tensor)
-
-        # will update the actor network...
-        actor_loss = self.update_actor_network(state_batch_tensor)
-
-        # will soft update the target network....       
-        self.soft_update_target_network(self.critic_target_net, self.critic_net)
-        self.soft_update_target_network(self.actor_target_net, self.actor_net)
-
-        return critic_loss.data.cpu().numpy()[0], actor_loss.data.cpu().numpy()[0]
-
-    # update the critic network....
-    def update_critic_network(self, state_batch_tensor, state_next_batch_tensor, terminal_batch_tensor, 
-            reward_batch_tensor, action_batch_tensor):
-        # calculate the target number...
-        action_out = self.actor_target_net(state_next_batch_tensor)
-        expected_Q = self.critic_target_net(state_next_batch_tensor, action_out)
-        target = reward_batch_tensor + self.gamma * expected_Q * terminal_batch_tensor
-        # detach from the calculation graphic....
-        target = target.detach()
-        # calculate the Q value...
-        Q_value = self.critic_net(state_batch_tensor, action_batch_tensor)
-
-        loss = (target - Q_value).pow(2).mean()
-
+        # update the critic network...
+        with torch.no_grad():
+            actions_out = self.actor_target_net(state_next_batch)
+            expected_q_value = self.critic_target_net(state_next_batch, actions_out)
+        # get the target value
+        target_value = reward_batch + self.args.gamma * expected_q_value * done_batch
+        target_value = target_value.detach()
+        values = self.critic_net(state_batch, actions_batch)
+        critic_loss = (target_value - values).pow(2).mean()
         self.optimizer_critic.zero_grad()
-        
-        loss.backward()
+        critic_loss.backward()
         self.optimizer_critic.step()
-
-        return loss
-
-    # update the actor network...
-    def update_actor_network(self, state_batch_tensor):
-        loss = -self.critic_net(state_batch_tensor, self.actor_net(state_batch_tensor))
-        loss = loss.mean()
-
+        # start to update the actor network
+        actor_loss = -self.critic_net(state_batch, self.actor_net(state_batch)).mean()
         self.optimizer_actor.zero_grad()
-        loss.backward()
+        actor_loss.backward()
         self.optimizer_actor.step()
+        # then, start to softupdate the network...
+        self._soft_update_target_network(self.critic_target_net, self.critic_net)
+        self._soft_update_target_network(self.actor_target_net, self.actor_net)
 
-        return loss
-
-    # soft update the target network....
-    def soft_update_target_network(self, target, source):
+        return actor_loss.item(), critic_loss.item()
+    
+    # soft update the network
+    def _soft_update_target_network(self, target, source):
         # update the critic network firstly...
         for target_param, param in zip(target.parameters(), source.parameters()):
-            target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
-
-# ------------------------------------------------------------------------------------------------------- #
-
-    # here is used to test the network....
-    def test_network(self, env_name):
-        model_path = 'saved_models/' + env_name + '/policy_model.pt'
-        actor_model, filter_model = torch.load(model_path, map_location=lambda storage, loc: storage)
-        self.actor_net.load_state_dict(actor_model)
+            target_param.data.copy_(self.args.tau * param.data + (1 - self.args.tau) * target_param.data)
+    
+    # functions to test the network
+    def test_network(self):
+        model_path = self.args.save_dir + self.args.env_name + '/model.pt'
+        self.actor_net.load_state_dict(torch.load(model_path, map_location=lambda storage, loc: storage))
         self.actor_net.eval()
-        while True:
+        # start to test
+        for _ in range(5):
             state = self.env.reset()
-            state = self.test_filter(state, filter_model.rs.mean, filter_model.rs.std)
             reward_sum = 0
-
             while True:
                 self.env.render()
-                state_tensor = torch.Tensor(state).view(1, -1)
-                state_tensor = Variable(state_tensor)
-                action_out = self.actor_net(state_tensor)
-                actor_numpy = action_out.data.numpy()[0]
-
-                state_, reward, done, _ = self.env.step(self.action_scale * actor_numpy)
-                state_ = self.test_filter(state_, filter_model.rs.mean, filter_model.rs.std)
+                state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
+                with torch.no_grad():
+                    actions = self.actor_net(state)
+                actions = actions.detach().numpy()[0]
+                state_, reward, done, _ = self.env.step(self.action_scale * actions)
                 reward_sum += reward
-
                 if done:
                     break
-
                 state = state_
-
-            print('The reward sum is ' + str(reward_sum))
-
-    # used for testing... reduce mean and the variance...
-    def test_filter(self, x, mean, std, clip=10):
-        x = x - mean
-        x = x / (std + 1e-8)
-        x = np.clip(x, -clip, clip)
-
-        return x
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            print('The reward of this episode is {}.'.format(reward_sum))
+        self.env.close()
