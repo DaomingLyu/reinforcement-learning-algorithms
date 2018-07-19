@@ -1,6 +1,6 @@
 # Deep Reinforcement Learning Alogrithms
 ![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)  
-This Repository Will Implement the Classic Deep Reinforcement Learning Algorithms. 
+This Repository Will Implement the Classic Deep Reinforcement Learning Algorithms.  
 **Important Notice:** Due to the upgrade of pytorch(from 0.3 to 0.4), the repository will have an important update on **August** with pytorch 0.4.0 and better codes style.
 - [x] [Deep Q-Learning Network(DQN)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/dqn)
 - [x] [Double DQN(DDQN)](https://github.com/TianhongDai/reinforcement_learning_algorithms/tree/master/double_dqn)
